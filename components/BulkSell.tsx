@@ -171,9 +171,15 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
       for (const item of validItems) {
         let stockItem: StockItem | undefined;
         
-        // Check if it's an existing item
+        // First try to find by existingItemId
         if (item.existingItemId) {
           stockItem = existingItems.find(existing => existing.id === item.existingItemId);
+        } else {
+          // If no existingItemId, try to find by name and category
+          stockItem = existingItems.find(existing => 
+            existing.name.toLowerCase() === item.name.toLowerCase() && 
+            existing.category.toLowerCase() === item.category.toLowerCase()
+          );
         }
 
         if (stockItem) {
@@ -184,6 +190,8 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
             continue;
           }
 
+          console.log(`Updating ${stockItem.name}: ${stockItem.quantity} -> ${newQuantity}`);
+          
           await update(ref(db, `stock/${warehouseId}/${stockItem.id}`), {
             quantity: newQuantity,
             lastUpdated: serverTimestamp()
@@ -196,6 +204,23 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
             quantity: item.quantity,
             price: item.sellPrice,
             costPrice: stockItem.price,
+            taxPercent: item.taxPercent,
+            date: serverTimestamp() as unknown as string,
+            partyName: invoiceData.customerName,
+            userEmail
+          };
+
+          await push(ref(db, `transactions/${warehouseId}`), transaction);
+        } else {
+          // Handle new items (not in inventory) - just create transaction without updating inventory
+          console.log(`Processing new item: ${item.name}`);
+          
+          const transaction = {
+            itemId: `new-${item.id}`,
+            type: 'OUT' as const,
+            quantity: item.quantity,
+            price: item.sellPrice,
+            costPrice: item.sellPrice, // Use sell price as cost for new items
             taxPercent: item.taxPercent,
             date: serverTimestamp() as unknown as string,
             partyName: invoiceData.customerName,
@@ -225,6 +250,7 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
     if (selectedItem) {
       updateItem(id, 'name', selectedItem.name);
       updateItem(id, 'category', selectedItem.category);
+      updateItem(id, 'sellPrice', selectedItem.price); // Set sell price to current price
       updateItem(id, 'existingItemId', selectedItem.id);
     }
   };
@@ -391,7 +417,7 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
                       <option value="">Select existing item</option>
                       {existingItems.map(existing => (
                         <option key={existing.id} value={existing.id}>
-                          {existing.name} (Stock: {existing.quantity})
+                          {existing.name} (Stock: {existing.quantity}, Price: ₹{existing.price})
                         </option>
                       ))}
                     </select>
@@ -423,6 +449,14 @@ export const BulkSell: React.FC<BulkSellProps> = ({ warehouseId, userEmail, onBa
                       min="0"
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
+                    {item.existingItemId && (() => {
+                      const existingItem = existingItems.find(ex => ex.id === item.existingItemId);
+                      return existingItem && item.quantity > existingItem.quantity ? (
+                        <span className="text-xs text-red-600 mt-1">
+                          Max available: {existingItem.quantity}
+                        </span>
+                      ) : null;
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <input
