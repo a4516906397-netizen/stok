@@ -13,6 +13,8 @@ import { StockItem, ViewMode, ChatMessage, Warehouse, StockTransaction } from '.
 import { StockList } from './components/StockList';
 import { StatsCard } from './components/StatsCard';
 import { RecentActivity } from './components/RecentActivity';
+import { BulkAdd } from './components/BulkAdd';
+import { BulkSell } from './components/BulkSell';
 import { sendMessageToAI } from './services/aiService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -55,7 +57,9 @@ import {
   TrendingUp,
   TrendingDown,
   Minimize2,
-  Maximize2
+  Maximize2,
+  ShoppingCart,
+  PackagePlus
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
@@ -975,7 +979,13 @@ const AuthenticatedApp = ({ user, logout }: { user: User, logout: () => void }) 
                   <button onClick={() => setView('dashboard')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'dashboard' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><LayoutDashboard size={20}/> Dashboard</button>
                   <button onClick={() => setView('recent')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'recent' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><Calendar size={20}/> Recent Activity</button>
                   <button onClick={() => setView('inventory')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'inventory' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><Package size={20}/> Inventory</button>
-                  {view !== 'inventory' && view !== 'recent' && view !== 'dashboard' && view !== 'ai' && view !== 'team_chat' ? null : <button onClick={() => setView('add')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'add' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><PlusCircle size={20}/> Add Stock</button>}
+                  {view !== 'inventory' && view !== 'recent' && view !== 'dashboard' && view !== 'ai' && view !== 'team_chat' ? null : (
+                    <>
+                      <button onClick={() => setView('add')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'add' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><PlusCircle size={20}/> Add Stock</button>
+                      <button onClick={() => setView('bulk_add')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'bulk_add' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><PackagePlus size={20}/> Bulk Add</button>
+                      <button onClick={() => setView('bulk_sell')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'bulk_sell' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><ShoppingCart size={20}/> Bulk Sell</button>
+                    </>
+                  )}
                   <button onClick={() => setView('team_chat')} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${view === 'team_chat' ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'text-gray-500 hover:bg-gray-50'}`}><Users size={20}/> Team Chat</button>
                 </> : (
                   <div className="text-center py-10 px-4">
@@ -1045,6 +1055,8 @@ const AuthenticatedApp = ({ user, logout }: { user: User, logout: () => void }) 
                                </div>
                            )}
                            {view === 'add' && <AddItemForm onAdd={handleAddItem} onUpdateExisting={handleUpdateExisting} items={items} isMobile={isMobile} />}
+                           {view === 'bulk_add' && <BulkAdd warehouseId={currentWarehouse?.id || ''} userEmail={user?.email || ''} onBack={() => setView('inventory')} existingItems={items} />}
+                           {view === 'bulk_sell' && <BulkSell warehouseId={currentWarehouse?.id || ''} userEmail={user?.email || ''} onBack={() => setView('inventory')} existingItems={items} />}
                            {view === 'team_chat' && <TeamChat user={user} messages={teamMessages} onSend={handleTeamSend} isMobile={isMobile} />}
                         </>
                     )}

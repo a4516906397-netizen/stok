@@ -39,7 +39,43 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export type ViewMode = 'warehouses' | 'dashboard' | 'recent' | 'inventory' | 'add' | 'ai' | 'team_chat';
+export type ViewMode = 'warehouses' | 'dashboard' | 'recent' | 'inventory' | 'add' | 'bulk_add' | 'bulk_sell' | 'ai' | 'team_chat';
+
+export interface BulkAddItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  price: number;
+  minThreshold: number;
+  description?: string;
+  source?: string;
+  isNew: boolean;
+}
+
+export interface BulkSellItem {
+  id: string;
+  existingItemId?: string;
+  name: string;
+  category: string;
+  quantity: number;
+  sellPrice: number;
+  taxPercent: number;
+}
+
+export interface InvoiceData {
+  sellerName: string;
+  sellerAddress: string;
+  sellerPhone: string;
+  sellerEmail: string;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  items: BulkSellItem[];
+  date: string;
+  invoiceNumber: string;
+}
 
 export interface AIResponse {
   choices: {
